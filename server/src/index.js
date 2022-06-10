@@ -4,15 +4,7 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import passport from "passport";
-import session from "express-session";
-
-const app = express();
-
-//Application Middlewares
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(helmet());
-app.use(cors());
+import session from "cookie-session";
 
 //configs
 import routeConfig from "./config/route.config";
@@ -34,13 +26,32 @@ import User from "./API/User/index";
 import Feedback from "./API/Feedback/index";
 import Payment from "./API/Payments/index";
 
+const app = express();
+
+//Application Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(helmet());
+app.use(cors());
+
+
 app.set('trust proxy', 1) // trust first proxy
+// app.use(session({
+//   secret: 'keyboard cat',
+//   resave: false,
+//   saveUninitialized: true,
+//   cookie: { secure: true }
+// }))
 app.use(session({
-  secret: 'keyboard cat',
-  resave: false,
+  cookie:{
+      secure: true,
+      maxAge:60000
+         },
+  //store: new RedisStore(),
+  secret: 'secret',
   saveUninitialized: true,
-  cookie: { secure: true }
-}))
+  resave: false
+  }));
 
 //passport configuration
 routeConfig(passport);
@@ -70,7 +81,6 @@ app.get("/add", passport.authenticate("jwt"), async (req, res) => {
 }) 
 
 app.listen(4000, () =>
-    // console.log("server")
     ConnectDB()
     .then(() => console.log("Server is running \n DB connected"))
     .catch(() => console.log("Server is running DB didnt connected"))
